@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertResx = void 0;
+exports.convertResx = convertResx;
 const fs = require("fs");
 const path = require("path");
 const fileseek_plus_1 = require("fileseek_plus");
@@ -57,7 +57,6 @@ function convertResx(resxInput, outputFolder, options = null) {
     }
     return;
 }
-exports.convertResx = convertResx;
 let parser;
 function findFiles(resxInput, recursiveSearch) {
     if (resxInput == null) {
@@ -93,7 +92,7 @@ function getFilesForPath(inputPath, recursiveSearch) {
         return files;
     }
     //TODO wait for the fileseek maintainer to merge my pull request
-    files = fileseek_plus_1.default(inputPath, /.resx$/, recursiveSearch);
+    files = (0, fileseek_plus_1.default)(inputPath, /.resx$/, recursiveSearch);
     return files;
 }
 function sortFilesByRes(inputFiles, defaultCulture) {
@@ -227,21 +226,22 @@ export class ${resourceName} extends resourceFile {
             let importNames = [];
             let resourceConstruction = '';
             for (let filename of resourceInfo.generatedFiles) {
-                let importname = '' + filename;
-                importname.replace('.', '_');
-                importNames.push(importname);
+                let importName = '' + filename;
+                importName = importName.replace('.json', '');
+                importName = importName.replace('.', '_');
+                importNames.push(importName);
                 importStatements += `
-                import * as ${importname} from './${filename}'`;
+                import * as ${importName} from './${filename}'`;
             }
             resourceConstruction = importNames.join(', ');
             classesString = `
 ${importStatements}
 
-export class P3JS_1 extends resourceFile {
+export class ${resourceName} extends resourceFile {
 
     constructor(resourceManager: resourceManager) {
         super(resourceManager);
-        this.resources = Object.assign(${resourceConstruction});
+        this.resources = Object.assign({}, ${resourceConstruction});
     }
 
     ${resourceGetters}

@@ -1,6 +1,6 @@
 {
   "name": "resx-json-typescript-converter",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Converts resx files to json and optionaly generates a TypeScript resourceManager.",
   "main": "dist/index.js",
   "scripts": {
@@ -11,13 +11,13 @@
     "name": "easySoft. Gmbh"
   },
   "devDependencies": {
-    "@types/node": "^14.0.5",
+    "@types/node": "^22.1.0",
     "@types/xml2js": "^0.4.5",
-    "typescript": "^3.9.3"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "fileseek_plus": "^1.0.4",
-    "xml2js": "^0.5.0"
+    "xml2js": "^0.6.2"
   },
   "repository": {
     "type": "git",

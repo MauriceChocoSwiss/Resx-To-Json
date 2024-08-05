@@ -4,7 +4,7 @@ declare const require: any;
 import * as fs from 'fs';
 import * as path from 'path';
 import fileseek from 'fileseek_plus';
-import { Parser as XmlParser } from 'xml2js';
+import {Parser as XmlParser} from 'xml2js';
 
 export interface res2TsOptions {
     mergeCulturesToSingleFile: boolean;
@@ -21,23 +21,23 @@ class Options implements res2TsOptions {
     public defaultResxCulture: string = 'en';
 
     constructor(optionsObject: res2TsOptions) {
-        if(optionsObject == null) {
+        if (optionsObject == null) {
             return;
         }
 
-        if(Object.hasOwnProperty.call(optionsObject, 'mergeCulturesToSingleFile') && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
+        if (Object.hasOwnProperty.call(optionsObject, 'mergeCulturesToSingleFile') && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
             this.mergeCulturesToSingleFile = optionsObject.mergeCulturesToSingleFile;
         }
 
-        if(Object.hasOwnProperty.call(optionsObject, 'generateTypeScriptResourceManager') && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
+        if (Object.hasOwnProperty.call(optionsObject, 'generateTypeScriptResourceManager') && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
             this.generateTypeScriptResourceManager = optionsObject.generateTypeScriptResourceManager;
         }
 
-        if(Object.hasOwnProperty.call(optionsObject, 'searchRecursive') && typeof optionsObject.searchRecursive == 'boolean') {
+        if (Object.hasOwnProperty.call(optionsObject, 'searchRecursive') && typeof optionsObject.searchRecursive == 'boolean') {
             this.searchRecursive = optionsObject.searchRecursive;
         }
 
-        if(Object.hasOwnProperty.call(optionsObject, 'defaultResxCulture') && typeof optionsObject.defaultResxCulture == 'string') {
+        if (Object.hasOwnProperty.call(optionsObject, 'defaultResxCulture') && typeof optionsObject.defaultResxCulture == 'string') {
             this.defaultResxCulture = optionsObject.defaultResxCulture;
         }
     }
@@ -63,7 +63,7 @@ export function convertResx(resxInput: string | string[], outputFolder: string, 
     files = findFiles(resxInput, OptionsInternal.searchRecursive)
 
     // Check wether there are some files in the Input path
-    if(files.length < 1) {
+    if (files.length < 1) {
         console.log('No *.resx-files found in the input path.');
         return;
     }
@@ -75,7 +75,7 @@ export function convertResx(resxInput: string | string[], outputFolder: string, 
     let resourceNameList = generateJson(filesSorted, outputFolder, OptionsInternal.mergeCulturesToSingleFile)
 
     // Generate the resource-manager (if set in the options)
-    if(OptionsInternal.generateTypeScriptResourceManager) {
+    if (OptionsInternal.generateTypeScriptResourceManager) {
         generateResourceManager(outputFolder, resourceNameList, OptionsInternal.mergeCulturesToSingleFile, OptionsInternal.defaultResxCulture);
     }
 
@@ -86,26 +86,26 @@ export function convertResx(resxInput: string | string[], outputFolder: string, 
 let parser: XmlParser;
 
 function findFiles(resxInput: string | string[], recursiveSearch: boolean): string[] {
-    
-    if(resxInput == null) {
+
+    if (resxInput == null) {
         console.error('No input filepath given');
         return [];
     }
-    
-    if(typeof resxInput == 'string') {
+
+    if (typeof resxInput == 'string') {
         return getFilesForPath(resxInput, recursiveSearch);
     }
-    
-    if(!Array.isArray(resxInput)) {
+
+    if (!Array.isArray(resxInput)) {
         console.warn('The given input path is neither an string[] nor a single string');
         return [];
     }
-    
+
     let files: string [] = [];
-    for(let inPath of resxInput) {
+    for (let inPath of resxInput) {
         let filesInPath = getFilesForPath(inPath, recursiveSearch);
-        for(let file of filesInPath) {
-            if(!files.includes(file)) {
+        for (let file of filesInPath) {
+            if (!files.includes(file)) {
                 files.push(file);
             }
         }
@@ -113,11 +113,11 @@ function findFiles(resxInput: string | string[], recursiveSearch: boolean): stri
     return files;
 }
 
-function getFilesForPath(inputPath: string, recursiveSearch: boolean): string[]{
+function getFilesForPath(inputPath: string, recursiveSearch: boolean): string[] {
     let files: string [] = [];
 
-    if(inputPath.endsWith('.resx') ) {
-        if(!fs.existsSync(inputPath)) {
+    if (inputPath.endsWith('.resx')) {
+        if (!fs.existsSync(inputPath)) {
             console.warn(`The file or path '${inputPath}' could not be found.`);
             return files;
         }
@@ -135,16 +135,15 @@ function sortFilesByRes(inputFiles: string [], defaultCulture: string): resxFile
 
     let sorted: resxFiles = {}
 
-    for (let file of inputFiles)
-    {
+    for (let file of inputFiles) {
         //Filename and Culture
         let info = getResxFileInfo(file);
 
-        if(info.culture == null) {
+        if (info.culture == null) {
             info.culture = defaultCulture;
         }
 
-        if(!Object.hasOwnProperty.call(sorted, info.name)) {
+        if (!Object.hasOwnProperty.call(sorted, info.name)) {
             sorted[info.name] = {}
         }
 
@@ -155,12 +154,12 @@ function sortFilesByRes(inputFiles: string [], defaultCulture: string): resxFile
 }
 
 function generateJson(resxFiles: resxFiles, outputFolder: string, mergeCultures: boolean): resourceFileKeyCollection {
-    if(parser == undefined || parser == null) {
+    if (parser == undefined || parser == null) {
         parser = new XmlParser()
     }
 
     //Create the Directory before we write to it
-    if(!fs.existsSync(outputFolder)) {
+    if (!fs.existsSync(outputFolder)) {
         fs.mkdirSync(outputFolder, {recursive: true})
     }
 
@@ -171,7 +170,7 @@ function generateJson(resxFiles: resxFiles, outputFolder: string, mergeCultures:
 
         let resourceKeys: resxFileKeys;
 
-        if(mergeCultures) {
+        if (mergeCultures) {
             resourceKeys = generateJsonMerged(outputFolder, cultureFiles, resxFileName);
         } else {
             resourceKeys = generateJsonSingle(outputFolder, cultureFiles, resxFileName);
@@ -187,10 +186,9 @@ function generateJsonMerged(outputFolder: string, cultureFiles: resxFileCulture,
 
     let resKeys: string[] = [];
 
-    let o: {[key: string]: resxKeyValues} = {};
-    
-    for (let culture in cultureFiles)
-    {
+    let o: { [key: string]: resxKeyValues } = {};
+
+    for (let culture in cultureFiles) {
         let file = cultureFiles[culture];
 
         let resxContentObject = getResxKeyValues(file);
@@ -198,8 +196,8 @@ function generateJsonMerged(outputFolder: string, cultureFiles: resxFileCulture,
         o[culture] = resxContentObject;
 
         // Add the ResourceKeys to the key collection
-        for(let key of Object.keys(resxContentObject)){
-            if(!resKeys.includes(key)) {
+        for (let key of Object.keys(resxContentObject)) {
+            if (!resKeys.includes(key)) {
                 resKeys.push(key);
             }
         }
@@ -225,13 +223,12 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
     let resKeys: string[] = [];
     let targetFiles: string[] = [];
 
-    for (let culture in cultureFiles)
-    {
+    for (let culture in cultureFiles) {
         let file = cultureFiles[culture];
 
         let resxContentObject = getResxKeyValues(file);
 
-        let o: {[key: string]: resxKeyValues} = {};
+        let o: { [key: string]: resxKeyValues } = {};
         o[culture] = resxContentObject;
 
         //Json strinify
@@ -246,8 +243,8 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
         targetFiles.push(targetFileName);
 
         // Add the ResourceKeys to the key collection
-        for(let key of Object.keys(resxContentObject)){
-            if(!resKeys.includes(key)) {
+        for (let key of Object.keys(resxContentObject)) {
+            if (!resKeys.includes(key)) {
                 resKeys.push(key);
             }
         }
@@ -261,9 +258,9 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
 }
 
 function generateResourceManager(outputFolder: string, resourceNameList: resourceFileKeyCollection, isResourcesMergedByCulture: boolean, defaultCulture: string) {
-    
+
     let classesString: string = '';
-    let classInstancesString: string ='';
+    let classInstancesString: string = '';
 
     for (let resourceInfo of Object.values(resourceNameList)) {
 
@@ -277,7 +274,7 @@ function generateResourceManager(outputFolder: string, resourceNameList: resourc
     `;
 
         let resourceGetters: string = '';
-        for (let resxIdentifier of resourceInfo.resxKeys){
+        for (let resxIdentifier of resourceInfo.resxKeys) {
             resourceGetters += `
     get ${resxIdentifier}(): string {
         return this.get('${resxIdentifier}');
@@ -285,7 +282,7 @@ function generateResourceManager(outputFolder: string, resourceNameList: resourc
     `;
         }
 
-        if(isResourcesMergedByCulture) {
+        if (isResourcesMergedByCulture) {
             classesString += `
 import * as resx${resourceName} from './${resourceInfo.generatedFiles[0].trim()}';
 
@@ -303,13 +300,13 @@ export class ${resourceName} extends resourceFile {
             let importNames: string[] = [];
             let resourceConstruction: string = '';
 
-
-            for(let filename of resourceInfo.generatedFiles) {
-                let importname = '' + filename;
-                importname.replace('.', '_');
-                importNames.push(importname);
+            for (let filename of resourceInfo.generatedFiles) {
+                let importName = '' + filename;
+                importName = importName.replace('.json', '')
+                importName = importName.replace('.', '_');
+                importNames.push(importName);
                 importStatements += `
-                import * as ${importname} from './${filename}'`;
+                import * as ${importName} from './${filename}'`;
             }
 
             resourceConstruction = importNames.join(', ');
@@ -317,11 +314,11 @@ export class ${resourceName} extends resourceFile {
             classesString = `
 ${importStatements}
 
-export class P3JS_1 extends resourceFile {
+export class ${resourceName} extends resourceFile {
 
     constructor(resourceManager: resourceManager) {
         super(resourceManager);
-        this.resources = Object.assign(${resourceConstruction});
+        this.resources = Object.assign({}, ${resourceConstruction});
     }
 
     ${resourceGetters}
@@ -401,7 +398,7 @@ function getResxFileInfo(filePath: string): resxFileInfo {
     let filenameSplit = filename.split('.');
     filenameSplit.pop();
 
-    if(filenameSplit.length > 1) {
+    if (filenameSplit.length > 1) {
         fileCulture = filenameSplit.pop();
     }
 
@@ -423,7 +420,7 @@ function getResxKeyValues(filepath: string): resxKeyValues {
 
     parser.parseString(fileContentString, function (err: any, xmlObject: any) {
 
-        if(xmlObject == undefined ||
+        if (xmlObject == undefined ||
             xmlObject == null ||
             !Object.hasOwnProperty.call(xmlObject, 'root') ||
             !Object.hasOwnProperty.call(xmlObject.root, 'data') ||
@@ -432,10 +429,9 @@ function getResxKeyValues(filepath: string): resxKeyValues {
             return;
         }
 
-        for (let i in xmlObject.root.data)
-        {
+        for (let i in xmlObject.root.data) {
             const name = xmlObject.root.data[i].$.name;
-            const value =  xmlObject.root.data[i].value.toString();
+            const value = xmlObject.root.data[i].value.toString();
 
             resources[name] = value;
         }
