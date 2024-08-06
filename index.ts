@@ -14,6 +14,7 @@ export interface res2TsOptions {
     ressourcesManagerName: string;
     startDynamicTokenChars: string;
     endDynamicTokenChars: string;
+    withCustomCultureStore: boolean;
 }
 
 class Options implements res2TsOptions {
@@ -25,6 +26,7 @@ class Options implements res2TsOptions {
     public ressourcesManagerName: string = '';
     public startDynamicTokenChars: string = '{{';
     public endDynamicTokenChars: string = '}}';
+    public withCustomCultureStore: boolean = false;
 
     constructor(optionsObject: res2TsOptions) {
         if (optionsObject == null) {
@@ -57,6 +59,10 @@ class Options implements res2TsOptions {
 
         if (Object.hasOwnProperty.call(optionsObject, 'endDynamicTokenChars') && typeof optionsObject.endDynamicTokenChars == 'string') {
             this.endDynamicTokenChars = optionsObject.endDynamicTokenChars;
+        }
+
+        if (Object.hasOwnProperty.call(optionsObject, 'withCustomCultureStore') && typeof optionsObject.withCustomCultureStore == 'boolean') {
+            this.withCustomCultureStore = optionsObject.withCustomCultureStore;
         }
     }
 }
@@ -94,7 +100,7 @@ export function convertResx(resxInput: string | string[], outputFolder: string, 
 
     // Generate the resource-manager (if set in the options)
     if (OptionsInternal.generateTypeScriptResourceManager) {
-        generateResourceManager(outputFolder, resourceNameList, OptionsInternal.mergeCulturesToSingleFile, OptionsInternal.defaultResxCulture, OptionsInternal.startDynamicTokenChars, OptionsInternal.endDynamicTokenChars, OptionsInternal.ressourcesManagerName);
+        generateResourceManager(outputFolder, resourceNameList, OptionsInternal.mergeCulturesToSingleFile, OptionsInternal.defaultResxCulture, OptionsInternal.startDynamicTokenChars, OptionsInternal.endDynamicTokenChars, OptionsInternal.ressourcesManagerName, OptionsInternal.withCustomCultureStore);
     }
 
     return;
@@ -274,7 +280,14 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
     }
 }
 
-function generateResourceManager(outputFolder: string, resourceNameList: resourceFileKeyCollection, isResourcesMergedByCulture: boolean, defaultCulture: string, startDynamicTokenChars: string, endDynamicTokenChars: string, ressourcesManagerName: string) {
+function generateResourceManager(outputFolder: string,
+                                 resourceNameList: resourceFileKeyCollection,
+                                 isResourcesMergedByCulture: boolean,
+                                 defaultCulture: string,
+                                 startDynamicTokenChars: string,
+                                 endDynamicTokenChars: string,
+                                 ressourcesManagerName: string,
+                                 withCustomCultureStore: boolean) {
 
     let classesString: string = '';
     let classInstancesString: string = '';
@@ -283,12 +296,14 @@ function generateResourceManager(outputFolder: string, resourceNameList: resourc
 
         let resourceName = resourceInfo.resourcename;
 
-        classInstancesString += `
-            private _${resourceName}: ${resourceName} = new ${resourceName}(this);
-            get ${resourceName}(): ${resourceName} {
-                return this._${resourceName};
-            }
-        `;
+        if (!withCustomCultureStore) {
+            classInstancesString += `
+                private _${resourceName}: ${resourceName} = new ${resourceName}(this);
+                get ${resourceName}(): ${resourceName} {
+                    return this._${resourceName};
+                }
+            `;
+        }
 
         let resourceGetters: string = '';
         for (let resxIdentifier of resourceInfo.resxKeys) {
@@ -333,8 +348,8 @@ function generateResourceManager(outputFolder: string, resourceNameList: resourc
                 
                 export class ${resourceName} extends resourceFile {
                 
-                constructor(resourceManager: resourceManager) {
-                    super(resourceManager);
+                constructor(${withCustomCultureStore ? '' : 'resourceManager: resourceManager'}) {
+                    super(${withCustomCultureStore ? '' : 'resourceManager'});
                     this.resources = Object.assign({}, ${resourceConstruction});
                 }
                 
@@ -364,19 +379,24 @@ function generateResourceManager(outputFolder: string, resourceNameList: resourc
             // Generated class instances start
             ${classInstancesString}
             // Gen end
-        }
-        
+        }`;
+
+    if (withCustomCultureStore) {
+        resxManagerString = 'import { useUserCultureStore } from \'@stores/user-culture\';';
+    }
+
+    resxManagerString += `
         abstract class resourceFile {
-            protected resMan: resourceManager;
+            ${withCustomCultureStore ? 'private userCultureStore = useUserCultureStore();' : 'protected resMan: resourceManager;'}
             protected resources: { [langKey: string]: { [resKey: string]: string } } = {};
         
-            constructor(resourceManager: resourceManager) {
-                this.resMan = resourceManager;
-            }
+            ${withCustomCultureStore ? '' : `constructor(resourceManager: resourceManager}) {
+                this.resMan = resourceManager;        
+            }`}
         
             public getTranslation
             (resKey: string) {
-                const language = this.resMan.language;
+                const language = ${withCustomCultureStore ? 'this.userCultureStore.userCultureCode' : 'this.resMan.language'};
         
                 // Check if the language exists for this resource and if the language has an corresponsing key
                 if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {

@@ -10,6 +10,7 @@ const index_1 = require("./index");
     searchRecursive: true,
     startDynamicTokenChars: '{{',
     endDynamicTokenChars: '}}',
-    ressourcesManagerName: 'test'
+    ressourcesManagerName: 'test',
+    withCustomCultureStore: false
 });
 //# sourceMappingURL=test.js.map

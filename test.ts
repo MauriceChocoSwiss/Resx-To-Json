@@ -9,5 +9,6 @@ convertResx(['./test/P3JS.en.resx', './test/P3JS.resx'], 'resOut', {
     searchRecursive: true,
     startDynamicTokenChars: '{{',
     endDynamicTokenChars: '}}',
-    ressourcesManagerName: 'test'
+    ressourcesManagerName: 'test',
+    withCustomCultureStore: false
 });
