@@ -11,6 +11,9 @@ class Options {
         this.generateTypeScriptResourceManager = true;
         this.searchRecursive = false;
         this.defaultResxCulture = 'en';
+        this.ressourcesManagerName = '';
+        this.startDynamicTokenChars = '{{';
+        this.endDynamicTokenChars = '}}';
         if (optionsObject == null) {
             return;
         }
@@ -25,6 +28,15 @@ class Options {
         }
         if (Object.hasOwnProperty.call(optionsObject, 'defaultResxCulture') && typeof optionsObject.defaultResxCulture == 'string') {
             this.defaultResxCulture = optionsObject.defaultResxCulture;
+        }
+        if (Object.hasOwnProperty.call(optionsObject, 'ressourcesManagerName') && typeof optionsObject.ressourcesManagerName == 'string') {
+            this.ressourcesManagerName = optionsObject.ressourcesManagerName;
+        }
+        if (Object.hasOwnProperty.call(optionsObject, 'startDynamicTokenChars') && typeof optionsObject.startDynamicTokenChars == 'string') {
+            this.startDynamicTokenChars = optionsObject.startDynamicTokenChars;
+        }
+        if (Object.hasOwnProperty.call(optionsObject, 'endDynamicTokenChars') && typeof optionsObject.endDynamicTokenChars == 'string') {
+            this.endDynamicTokenChars = optionsObject.endDynamicTokenChars;
         }
     }
 }
@@ -53,7 +65,7 @@ function convertResx(resxInput, outputFolder, options = null) {
     let resourceNameList = generateJson(filesSorted, outputFolder, OptionsInternal.mergeCulturesToSingleFile);
     // Generate the resource-manager (if set in the options)
     if (OptionsInternal.generateTypeScriptResourceManager) {
-        generateResourceManager(outputFolder, resourceNameList, OptionsInternal.mergeCulturesToSingleFile, OptionsInternal.defaultResxCulture);
+        generateResourceManager(outputFolder, resourceNameList, OptionsInternal.mergeCulturesToSingleFile, OptionsInternal.defaultResxCulture, OptionsInternal.startDynamicTokenChars, OptionsInternal.endDynamicTokenChars, OptionsInternal.ressourcesManagerName);
     }
     return;
 }
@@ -188,38 +200,38 @@ function generateJsonSingle(outputFolder, cultureFiles, resourceName) {
         resxKeys: resKeys
     };
 }
-function generateResourceManager(outputFolder, resourceNameList, isResourcesMergedByCulture, defaultCulture) {
+function generateResourceManager(outputFolder, resourceNameList, isResourcesMergedByCulture, defaultCulture, startDynamicTokenChars, endDynamicTokenChars, ressourcesManagerName) {
     let classesString = '';
     let classInstancesString = '';
     for (let resourceInfo of Object.values(resourceNameList)) {
         let resourceName = resourceInfo.resourcename;
         classInstancesString += `
-    private _${resourceName}: ${resourceName} = new ${resourceName}(this);
-    get ${resourceName}(): ${resourceName} {
-        return this._${resourceName};
-    }
-    `;
+            private _${resourceName}: ${resourceName} = new ${resourceName}(this);
+            get ${resourceName}(): ${resourceName} {
+                return this._${resourceName};
+            }
+        `;
         let resourceGetters = '';
         for (let resxIdentifier of resourceInfo.resxKeys) {
             resourceGetters += `
-    get ${resxIdentifier}(): string {
-        return this.get('${resxIdentifier}');
-    }
-    `;
+                get ${resxIdentifier}(): string {
+                    return this.getTranslation('${resxIdentifier}');
+                }
+            `;
         }
         if (isResourcesMergedByCulture) {
             classesString += `
-import * as resx${resourceName} from './${resourceInfo.generatedFiles[0].trim()}';
+                import * as resx${resourceName} from './${resourceInfo.generatedFiles[0].trim()}';
+                
+                export class ${resourceName} extends resourceFile {
 
-export class ${resourceName} extends resourceFile {
-
-    constructor(resourceManager: resourceManager) {
-        super(resourceManager);
-        this.resources = (<any>resx${resourceName}).default;
-    }
-    ${resourceGetters}
-}
- `;
+                    constructor(resourceManager: resourceManager) {
+                        super(resourceManager);
+                        this.resources = (<any>resx${resourceName}).default;
+                    }
+                    ${resourceGetters}
+                }
+            `;
         }
         else {
             let importStatements = '';
@@ -235,76 +247,86 @@ export class ${resourceName} extends resourceFile {
             }
             resourceConstruction = importNames.join(', ');
             classesString = `
-${importStatements}
-
-export class ${resourceName} extends resourceFile {
-
-    constructor(resourceManager: resourceManager) {
-        super(resourceManager);
-        this.resources = Object.assign({}, ${resourceConstruction});
-    }
-
-    ${resourceGetters}
-}
-`;
+                ${importStatements}
+                
+                export class ${resourceName} extends resourceFile {
+                
+                constructor(resourceManager: resourceManager) {
+                    super(resourceManager);
+                    this.resources = Object.assign({}, ${resourceConstruction});
+                }
+                
+                ${resourceGetters}
+                }
+            `;
         }
     }
     let resxManagerString = `
-/**
- * This class gives you type-hinting for the automatic generated resx-json files
- */
-
-export default class resourceManager {
-
-    public language: string;
-
-    constructor(language: string) {
-        this.language = language;
-    }
-
-    public setLanguage(language: string) {
-        this.language = language;
-    };
-
-    // Generated class instances start
-    ${classInstancesString}
-    // Gen end
-}
-
-abstract class resourceFile {
-    protected resMan: resourceManager;
-    protected resources: { [langKey: string]: { [resKey: string]: string } } = {};
-
-    constructor(resourceManager: resourceManager) {
-        this.resMan = resourceManager;
-    }
-
-    public get(resKey: string) {
-        let language = this.resMan.language;
-
-        // Check if the language exists for this resource and if the language has an corresponsing key
-        if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {
-            return this.resources[language][resKey];
+        /**
+         * This class gives you type-hinting for the automatic generated resx-json files
+         */
+        
+        export default class resourceManager {
+        
+            public language: string;
+        
+            constructor(language: string) {
+                this.language = language;
+            }
+        
+            public setLanguage(language: string) {
+                this.language = language;
+            };
+        
+            // Generated class instances start
+            ${classInstancesString}
+            // Gen end
         }
-
-        // If no entry could be found in the currently active language, try the default language
-        if (Object.hasOwnProperty.call(this.resources, '${defaultCulture}') && Object.hasOwnProperty.call(this.resources['${defaultCulture}'], resKey)) {
-            console.log(\`No text resource in the language "\${language}" with the key "\${resKey}".\`);
-            return this.resources['${defaultCulture}'][resKey];
+        
+        abstract class resourceFile {
+            protected resMan: resourceManager;
+            protected resources: { [langKey: string]: { [resKey: string]: string } } = {};
+        
+            constructor(resourceManager: resourceManager) {
+                this.resMan = resourceManager;
+            }
+        
+            public getTranslation
+            (resKey: string) {
+                const language = this.resMan.language;
+        
+                // Check if the language exists for this resource and if the language has an corresponsing key
+                if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {
+                    return this.resources[language][resKey];
+                }
+        
+                // If no entry could be found in the currently active language, try the default language
+                if (Object.hasOwnProperty.call(this.resources, '${defaultCulture}') && Object.hasOwnProperty.call(this.resources['${defaultCulture}'], resKey)) {
+                    console.log(\`No text resource in the language "\${language}" with the key "\${resKey}".\`);
+                    return this.resources['${defaultCulture}'][resKey];
+                }
+        
+                // If there is still no resource found output a warning and return the key.
+                console.warn(\`No text-resource for the key \${resKey} found.\`);
+                return '/!\\\\' + resKey;
+            };
+            
+            public getDynamicTranslation(resKey: string, params: { key: string; value: string }[]): string {
+                let translation = this.getTranslation(resKey);
+                for (const param of params) {
+                    const reg = RegExp('(${startDynamicTokenChars}' + ' ?[' + param.key + ']* ?' + '${endDynamicTokenChars})');
+                    translation = translation.replace(reg, param.value);
+                }
+                return translation;
+            }
         }
-
-        // If there is still no resource found output a warning and return the key.
-        console.warn(\`No text-resource for the key \${resKey} found.\`);
-        return resKey;
-    };
-}
-
-// Gen Classes start
-${classesString}
-// Gen Classes end
-`;
+        
+        // Gen Classes start
+        ${classesString}
+        // Gen Classes end
+    `;
     //Write the file
-    let targetFileName = `resourceManager.ts`;
+    let targetFileName = (ressourcesManagerName && ressourcesManagerName !== '' ? ressourcesManagerName : 'resourceManager') + '.ts';
     let targetPath = path.join(outputFolder, targetFileName);
     targetPath = path.normalize(targetPath);
     fs.writeFileSync(targetPath, resxManagerString, { encoding: 'utf-8' });

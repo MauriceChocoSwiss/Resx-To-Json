@@ -3,5 +3,8 @@ export interface res2TsOptions {
     generateTypeScriptResourceManager: boolean;
     searchRecursive: boolean;
     defaultResxCulture: string;
+    ressourcesManagerName: string;
+    startDynamicTokenChars: string;
+    endDynamicTokenChars: string;
 }
 export declare function convertResx(resxInput: string | string[], outputFolder: string, options?: res2TsOptions): void;
