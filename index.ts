@@ -382,7 +382,7 @@ function generateResourceManager(outputFolder: string,
         }`;
 
     if (withCustomCultureStore) {
-        resxManagerString = 'import { useUserCultureStore } from \'@stores/user-culture\';';
+        resxManagerString = 'import { useUserCultureStore } from \'@stores/userCulture\';';
     }
 
     resxManagerString += `

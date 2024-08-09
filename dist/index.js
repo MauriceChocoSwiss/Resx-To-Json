@@ -289,7 +289,7 @@ function generateResourceManager(outputFolder, resourceNameList, isResourcesMerg
             // Gen end
         }`;
     if (withCustomCultureStore) {
-        resxManagerString = 'import { useUserCultureStore } from \'@stores/user-culture\';';
+        resxManagerString = 'import { useUserCultureStore } from \'@stores/userCulture\';';
     }
     resxManagerString += `
         abstract class resourceFile {
