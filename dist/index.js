@@ -302,7 +302,7 @@ function generateResourceManager(outputFolder, resourceNameList, isResourcesMerg
         
             public getTranslation
             (resKey: string) {
-                const language = ${withCustomCultureStore ? 'this.userCultureStore.userCultureCode' : 'this.resMan.language'};
+                const language = ${withCustomCultureStore ? 'this.userCultureStore.userIsoCountryCode' : 'this.resMan.language'};
         
                 // Check if the language exists for this resource and if the language has an corresponsing key
                 if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {
