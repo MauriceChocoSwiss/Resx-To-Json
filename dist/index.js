@@ -1,50 +1,47 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertResx = convertResx;
-const fs = require("fs");
-const path = require("path");
-const fileseek_plus_1 = require("fileseek_plus");
-const xml2js_1 = require("xml2js");
+import * as fs from 'fs';
+import * as path from 'path';
+import fileSeek from 'fileseek_plus';
+import { Parser as XmlParser } from 'xml2js';
 class Options {
+    mergeCulturesToSingleFile = true;
+    generateTypeScriptResourceManager = true;
+    searchRecursive = false;
+    defaultResxCulture = 'en';
+    ressourcesManagerName = '';
+    startDynamicTokenChars = '{{';
+    endDynamicTokenChars = '}}';
+    withCustomCultureStore = false;
     constructor(optionsObject) {
-        this.mergeCulturesToSingleFile = true;
-        this.generateTypeScriptResourceManager = true;
-        this.searchRecursive = false;
-        this.defaultResxCulture = 'en';
-        this.ressourcesManagerName = '';
-        this.startDynamicTokenChars = '{{';
-        this.endDynamicTokenChars = '}}';
-        this.withCustomCultureStore = false;
         if (optionsObject == null) {
             return;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'mergeCulturesToSingleFile') && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
+        if (optionsObject['mergeCulturesToSingleFile'] !== undefined && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
             this.mergeCulturesToSingleFile = optionsObject.mergeCulturesToSingleFile;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'generateTypeScriptResourceManager') && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
+        if (optionsObject['generateTypeScriptResourceManager'] !== undefined && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
             this.generateTypeScriptResourceManager = optionsObject.generateTypeScriptResourceManager;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'searchRecursive') && typeof optionsObject.searchRecursive == 'boolean') {
+        if (optionsObject['searchRecursive'] !== undefined && typeof optionsObject.searchRecursive == 'boolean') {
             this.searchRecursive = optionsObject.searchRecursive;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'defaultResxCulture') && typeof optionsObject.defaultResxCulture == 'string') {
+        if (optionsObject['defaultResxCulture'] !== undefined && typeof optionsObject.defaultResxCulture == 'string') {
             this.defaultResxCulture = optionsObject.defaultResxCulture;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'ressourcesManagerName') && typeof optionsObject.ressourcesManagerName == 'string') {
+        if (optionsObject['ressourcesManagerName'] !== undefined && typeof optionsObject.ressourcesManagerName == 'string') {
             this.ressourcesManagerName = optionsObject.ressourcesManagerName;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'startDynamicTokenChars') && typeof optionsObject.startDynamicTokenChars == 'string') {
+        if (optionsObject['startDynamicTokenChars'] !== undefined && typeof optionsObject.startDynamicTokenChars == 'string') {
             this.startDynamicTokenChars = optionsObject.startDynamicTokenChars;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'endDynamicTokenChars') && typeof optionsObject.endDynamicTokenChars == 'string') {
+        if (optionsObject['endDynamicTokenChars'] !== undefined && typeof optionsObject.endDynamicTokenChars == 'string') {
             this.endDynamicTokenChars = optionsObject.endDynamicTokenChars;
         }
-        if (Object.hasOwnProperty.call(optionsObject, 'withCustomCultureStore') && typeof optionsObject.withCustomCultureStore == 'boolean') {
+        if (optionsObject['withCustomCultureStore'] !== undefined && typeof optionsObject.withCustomCultureStore == 'boolean') {
             this.withCustomCultureStore = optionsObject.withCustomCultureStore;
         }
     }
 }
-function convertResx(resxInput, outputFolder, options = null) {
+export function convertResx(resxInput, outputFolder, options = null) {
     // Read and validate the users options
     let OptionsInternal = new Options(options);
     // Check if an Input-Path was given
@@ -56,9 +53,9 @@ function convertResx(resxInput, outputFolder, options = null) {
     // Normalize the output path
     outputFolder = path.normalize(outputFolder);
     // Get the resx-file(s) from the input path
-    let files = [];
+    let files;
     files = findFiles(resxInput, OptionsInternal.searchRecursive);
-    // Check wether there are some files in the Input path
+    // Check whether there are some files in the Input path
     if (files.length < 1) {
         console.log('No *.resx-files found in the input path.');
         return;
@@ -108,7 +105,7 @@ function getFilesForPath(inputPath, recursiveSearch) {
         return files;
     }
     //TODO wait for the fileseek maintainer to merge my pull request
-    files = (0, fileseek_plus_1.default)(inputPath, /.resx$/, recursiveSearch);
+    files = fileSeek(inputPath, /.resx$/, recursiveSearch);
     return files;
 }
 function sortFilesByRes(inputFiles, defaultCulture) {
@@ -127,8 +124,8 @@ function sortFilesByRes(inputFiles, defaultCulture) {
     return sorted;
 }
 function generateJson(resxFiles, outputFolder, mergeCultures) {
-    if (parser == undefined || parser == null) {
-        parser = new xml2js_1.Parser();
+    if (parser == undefined) {
+        parser = new XmlParser();
     }
     //Create the Directory before we write to it
     if (!fs.existsSync(outputFolder)) {
@@ -162,7 +159,7 @@ function generateJsonMerged(outputFolder, cultureFiles, resourceName) {
             }
         }
     }
-    //Json stringify
+    //JSON stringify
     let content = JSON.stringify(o);
     //Write the file
     let targetFileName = `${resourceName}.json`;
@@ -170,7 +167,7 @@ function generateJsonMerged(outputFolder, cultureFiles, resourceName) {
     targetPath = path.normalize(targetPath);
     fs.writeFileSync(targetPath, content, { encoding: 'utf-8' });
     return {
-        resourcename: resourceName,
+        resourceName: resourceName,
         generatedFiles: [targetFileName],
         resxKeys: resKeys
     };
@@ -183,7 +180,7 @@ function generateJsonSingle(outputFolder, cultureFiles, resourceName) {
         let resxContentObject = getResxKeyValues(file);
         let o = {};
         o[culture] = resxContentObject;
-        //Json strinify
+        //JSON stringify
         let content = JSON.stringify(o);
         //Write the file
         let targetFileName = `${resourceName}.${culture}.json`;
@@ -199,7 +196,7 @@ function generateJsonSingle(outputFolder, cultureFiles, resourceName) {
         }
     }
     return {
-        resourcename: resourceName,
+        resourceName: resourceName,
         generatedFiles: targetFiles,
         resxKeys: resKeys
     };
@@ -208,7 +205,7 @@ function generateResourceManager(outputFolder, resourceNameList, isResourcesMerg
     let classesString = '';
     let classInstancesString = '';
     for (let resourceInfo of Object.values(resourceNameList)) {
-        let resourceName = resourceInfo.resourcename;
+        let resourceName = resourceInfo.resourceName;
         if (!withCustomCultureStore) {
             classInstancesString += `
                 private _${resourceName}: ${resourceName} = new ${resourceName}(this);
@@ -304,13 +301,13 @@ function generateResourceManager(outputFolder, resourceNameList, isResourcesMerg
             (resKey: string) {
                 const language = ${withCustomCultureStore ? 'this.userCultureStore.userIsoCountryCode' : 'this.resMan.language'};
         
-                // Check if the language exists for this resource and if the language has an corresponsing key
-                if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {
+                // Check if the language exists for this resource and if the language has an corresponding key
+                if (this.resources[language] !== undefined && this.resources[language][resKey] !== undefined) {
                     return this.resources[language][resKey];
                 }
         
                 // If no entry could be found in the currently active language, try the default language
-                if (Object.hasOwnProperty.call(this.resources, '${defaultCulture}') && Object.hasOwnProperty.call(this.resources['${defaultCulture}'], resKey)) {
+                if (this.resources['${defaultCulture}'] !== undefined && this.resources['${defaultCulture}'][resKey] !== undefined) {
                     console.log(\`No text resource in the language "\${language}" with the key "\${resKey}".\`);
                     return this.resources['${defaultCulture}'][resKey];
                 }
@@ -359,18 +356,14 @@ function getResxKeyValues(filepath) {
     const resources = {};
     parser.reset();
     let fileContentString = fs.readFileSync(filepath, { encoding: 'utf-8' });
-    parser.parseString(fileContentString, function (err, xmlObject) {
-        if (xmlObject == undefined ||
-            xmlObject == null ||
-            !Object.hasOwnProperty.call(xmlObject, 'root') ||
-            !Object.hasOwnProperty.call(xmlObject.root, 'data') ||
+    parser.parseString(fileContentString, function (_err, xmlObject) {
+        if (xmlObject == undefined || xmlObject['root'] === undefined || xmlObject.root['data'] === undefined ||
             xmlObject.root.data == undefined) {
             return;
         }
         for (let i in xmlObject.root.data) {
             const name = xmlObject.root.data[i].$.name;
-            const value = xmlObject.root.data[i].value.toString();
-            resources[name] = value;
+            resources[name] = xmlObject.root.data[i].value.toString();
         }
     });
     return resources;

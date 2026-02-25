@@ -1,9 +1,6 @@
-declare const __dirname: string;
-declare const require: any;
-
 import * as fs from 'fs';
 import * as path from 'path';
-import fileseek from 'fileseek_plus';
+import fileSeek from 'fileseek_plus';
 import {Parser as XmlParser} from 'xml2js';
 
 export interface res2TsOptions {
@@ -33,35 +30,35 @@ class Options implements res2TsOptions {
             return;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'mergeCulturesToSingleFile') && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
+        if (optionsObject['mergeCulturesToSingleFile'] !== undefined && typeof optionsObject.mergeCulturesToSingleFile == 'boolean') {
             this.mergeCulturesToSingleFile = optionsObject.mergeCulturesToSingleFile;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'generateTypeScriptResourceManager') && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
+        if (optionsObject['generateTypeScriptResourceManager'] !== undefined && typeof optionsObject.generateTypeScriptResourceManager == 'boolean') {
             this.generateTypeScriptResourceManager = optionsObject.generateTypeScriptResourceManager;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'searchRecursive') && typeof optionsObject.searchRecursive == 'boolean') {
+        if (optionsObject['searchRecursive'] !== undefined && typeof optionsObject.searchRecursive == 'boolean') {
             this.searchRecursive = optionsObject.searchRecursive;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'defaultResxCulture') && typeof optionsObject.defaultResxCulture == 'string') {
+        if (optionsObject['defaultResxCulture'] !== undefined && typeof optionsObject.defaultResxCulture == 'string') {
             this.defaultResxCulture = optionsObject.defaultResxCulture;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'ressourcesManagerName') && typeof optionsObject.ressourcesManagerName == 'string') {
+        if (optionsObject['ressourcesManagerName'] !== undefined && typeof optionsObject.ressourcesManagerName == 'string') {
             this.ressourcesManagerName = optionsObject.ressourcesManagerName;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'startDynamicTokenChars') && typeof optionsObject.startDynamicTokenChars == 'string') {
+        if (optionsObject['startDynamicTokenChars'] !== undefined && typeof optionsObject.startDynamicTokenChars == 'string') {
             this.startDynamicTokenChars = optionsObject.startDynamicTokenChars;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'endDynamicTokenChars') && typeof optionsObject.endDynamicTokenChars == 'string') {
+        if (optionsObject['endDynamicTokenChars'] !== undefined && typeof optionsObject.endDynamicTokenChars == 'string') {
             this.endDynamicTokenChars = optionsObject.endDynamicTokenChars;
         }
 
-        if (Object.hasOwnProperty.call(optionsObject, 'withCustomCultureStore') && typeof optionsObject.withCustomCultureStore == 'boolean') {
+        if (optionsObject['withCustomCultureStore'] !== undefined && typeof optionsObject.withCustomCultureStore == 'boolean') {
             this.withCustomCultureStore = optionsObject.withCustomCultureStore;
         }
     }
@@ -83,10 +80,10 @@ export function convertResx(resxInput: string | string[], outputFolder: string, 
     outputFolder = path.normalize(outputFolder);
 
     // Get the resx-file(s) from the input path
-    let files: string[] = [];
+    let files: string[];
     files = findFiles(resxInput, OptionsInternal.searchRecursive)
 
-    // Check wether there are some files in the Input path
+    // Check whether there are some files in the Input path
     if (files.length < 1) {
         console.log('No *.resx-files found in the input path.');
         return;
@@ -149,7 +146,7 @@ function getFilesForPath(inputPath: string, recursiveSearch: boolean): string[] 
     }
 
     //TODO wait for the fileseek maintainer to merge my pull request
-    files = fileseek(inputPath, /.resx$/, recursiveSearch);
+    files = fileSeek(inputPath, /.resx$/, recursiveSearch);
 
     return files;
 }
@@ -177,7 +174,7 @@ function sortFilesByRes(inputFiles: string [], defaultCulture: string): resxFile
 }
 
 function generateJson(resxFiles: resxFiles, outputFolder: string, mergeCultures: boolean): resourceFileKeyCollection {
-    if (parser == undefined || parser == null) {
+    if (parser == undefined) {
         parser = new XmlParser()
     }
 
@@ -226,7 +223,7 @@ function generateJsonMerged(outputFolder: string, cultureFiles: resxFileCulture,
         }
     }
 
-    //Json stringify
+    //JSON stringify
     let content: string = JSON.stringify(o);
 
     //Write the file
@@ -236,7 +233,7 @@ function generateJsonMerged(outputFolder: string, cultureFiles: resxFileCulture,
     fs.writeFileSync(targetPath, content, {encoding: 'utf-8'});
 
     return {
-        resourcename: resourceName,
+        resourceName: resourceName,
         generatedFiles: [targetFileName],
         resxKeys: resKeys
     }
@@ -254,7 +251,7 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
         let o: { [key: string]: resxKeyValues } = {};
         o[culture] = resxContentObject;
 
-        //Json strinify
+        //JSON stringify
         let content: string = JSON.stringify(o);
 
         //Write the file
@@ -274,7 +271,7 @@ function generateJsonSingle(outputFolder: string, cultureFiles: resxFileCulture,
     }
 
     return {
-        resourcename: resourceName,
+        resourceName: resourceName,
         generatedFiles: targetFiles,
         resxKeys: resKeys
     }
@@ -294,7 +291,7 @@ function generateResourceManager(outputFolder: string,
 
     for (let resourceInfo of Object.values(resourceNameList)) {
 
-        let resourceName = resourceInfo.resourcename;
+        let resourceName = resourceInfo.resourceName;
 
         if (!withCustomCultureStore) {
             classInstancesString += `
@@ -398,13 +395,13 @@ function generateResourceManager(outputFolder: string,
             (resKey: string) {
                 const language = ${withCustomCultureStore ? 'this.userCultureStore.userIsoCountryCode' : 'this.resMan.language'};
         
-                // Check if the language exists for this resource and if the language has an corresponsing key
-                if (Object.hasOwnProperty.call(this.resources, language) && Object.hasOwnProperty.call(this.resources[language], resKey)) {
+                // Check if the language exists for this resource and if the language has an corresponding key
+                if (this.resources[language] !== undefined && this.resources[language][resKey] !== undefined) {
                     return this.resources[language][resKey];
                 }
         
                 // If no entry could be found in the currently active language, try the default language
-                if (Object.hasOwnProperty.call(this.resources, '${defaultCulture}') && Object.hasOwnProperty.call(this.resources['${defaultCulture}'], resKey)) {
+                if (this.resources['${defaultCulture}'] !== undefined && this.resources['${defaultCulture}'][resKey] !== undefined) {
                     console.log(\`No text resource in the language "\${language}" with the key "\${resKey}".\`);
                     return this.resources['${defaultCulture}'][resKey];
                 }
@@ -464,12 +461,9 @@ function getResxKeyValues(filepath: string): resxKeyValues {
 
     let fileContentString = fs.readFileSync(filepath, {encoding: 'utf-8'})
 
-    parser.parseString(fileContentString, function (err: any, xmlObject: any) {
+    parser.parseString(fileContentString, function (_err: any, xmlObject: any) {
 
-        if (xmlObject == undefined ||
-            xmlObject == null ||
-            !Object.hasOwnProperty.call(xmlObject, 'root') ||
-            !Object.hasOwnProperty.call(xmlObject.root, 'data') ||
+        if (xmlObject == undefined || xmlObject['root'] === undefined || xmlObject.root['data'] === undefined ||
             xmlObject.root.data == undefined) {
 
             return;
@@ -477,9 +471,7 @@ function getResxKeyValues(filepath: string): resxKeyValues {
 
         for (let i in xmlObject.root.data) {
             const name = xmlObject.root.data[i].$.name;
-            const value = xmlObject.root.data[i].value.toString();
-
-            resources[name] = value;
+            resources[name] = xmlObject.root.data[i].value.toString();
         }
 
     });
@@ -505,7 +497,7 @@ interface resxKeyValues {
 }
 
 interface resxFileKeys {
-    resourcename: string;
+    resourceName: string;
     generatedFiles: string[];
     resxKeys: string[];
 }

@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
 		"declaration": true,
-		"module": "commonjs",
+		"module": "ESNext",
         "moduleResolution": "node",  
 		"noImplicitAny": true ,
 		"noImplicitThis": true,
 		"noImplicitReturns": true,
         "outDir": "dist",     
-		"target": "es6",
+		"target": "ESNext",
 		"sourceMap": true
 	},
 	"compileOnSave": true,
